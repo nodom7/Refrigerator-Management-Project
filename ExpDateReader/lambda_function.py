@@ -8,7 +8,7 @@ rekognition = boto3.client('rekognition')
 
 def lambda_handler(event, context):
     # Retrieve the S3 bucket name and object key from the event trigger
-    bucket_name = "barcodestorage"
+    bucket_name = "expdatestorage"
     object_key = event['Records'][0]['s3']['object']['key']
     
     # Step 1: Get the image from S3
@@ -45,3 +45,4 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"message": "Error detecting text", "error": str(e)})
         }
+
