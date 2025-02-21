@@ -1,118 +1,95 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState } from 'react';
+import { Button, Image, StyleSheet, View, Text, Alert } from 'react-native';
+import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+interface ImageAsset {
+  uri: string;
+  base64?: string;
+}
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function App() {
+  const [barcodeImage, setBarcodeImage] = useState<ImageAsset | null>(null);
+  const [expirationImage, setExpirationImage] = useState<ImageAsset | null>(null);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const pickImage = (setImage: (image: ImageAsset) => void) => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        includeBase64: true,
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        } else if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage || 'Unknown error');
+        } else {
+          const asset: Asset | undefined = response.assets && response.assets[0];
+          if (asset && asset.uri && asset.base64) {
+            setImage({ uri: asset.uri, base64: asset.base64 });
+          } else {
+            Alert.alert('Error', 'Failed to get image data.');
+          }
+        }
+      }
+    );
+  };
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const submitImages = async () => {
+    if (!barcodeImage || !expirationImage) {
+      Alert.alert('Missing Images', 'Please select both images before submitting.');
+      return;
+    }
+
+    const payload = {
+      barcodeImage: barcodeImage.base64,
+      expirationImage: expirationImage.base64,
+    };
+
+    try {
+      const response = await fetch('API endpoint placeholder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      Alert.alert('Success', 'Images submitted successfully!');
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to submit images.');
+    }
+  };
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Fridge Inventory</Text>
+
+      <Button title="Pick Barcode Image" onPress={() => pickImage(setBarcodeImage)} />
+      {barcodeImage && <Image source={{ uri: barcodeImage.uri }} style={styles.image} />}
+
+      <Button title="Pick Expiration Date Image" onPress={() => pickImage(setExpirationImage)} />
+      {expirationImage && <Image source={{ uri: expirationImage.uri }} style={styles.image} />}
+
+      <Button title="Submit Images" onPress={submitImages} />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    paddingTop: 50,
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
-  sectionTitle: {
+  header: {
     fontSize: 24,
-    fontWeight: '600',
+    marginBottom: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  image: {
+    width: 200,
+    height: 200,
+    marginVertical: 10,
+    resizeMode: 'contain',
   },
 });
-
-export default App;
