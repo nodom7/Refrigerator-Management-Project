@@ -1,3 +1,5 @@
+import { createStaticNavigation } from '@react-navigation/native';
+import ProfileScreen from './screens/ProfileScreen'; 
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -19,6 +21,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
 
 interface ImageAsset {
   uri: string;
@@ -168,6 +172,10 @@ export default function App() {
 
   return (
     <NavigationContainer>
+      <Stack.Navigator initialRouteName="ProfileScreen">
+      <Stack.Screen name="ProfileScreen" component={ProfileScreen}/>
+      <Stack.Screen name="ProfileScreen" component={RecipesScreen} />
+      </Stack.Navigator>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ color, size }) => {
@@ -195,6 +203,7 @@ export default function App() {
           )}
         </Tab.Screen>
         <Tab.Screen name="Recipes" component={RecipesScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} /> //allows for profile screen
       </Tab.Navigator>
     </NavigationContainer>
   );
